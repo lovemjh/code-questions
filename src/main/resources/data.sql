@@ -35,6 +35,24 @@ SELECT 1014, '陈晨', 'E1014', '研发部', '前端实习生', 'chenchen@compan
 INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
 SELECT 1015, '魏东', 'E1015', '市场部', '大客户经理', 'weidong@company.com', '13800001015', 1003 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 1015);
 
+-- 第二套组织架构模拟数据（上海分公司，独立顶级节点，便于演示拖拽调整层级）
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2001, '刘建国', 'E2001', '上海分公司', '分公司总经理', 'liujianguo@company.com', '13900002001', NULL WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2001);
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2002, '陈晓东', 'E2002', '技术部', '技术部经理', 'chenxiaodong@company.com', '13900002002', 2001 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2002);
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2003, '王晓琳', 'E2003', '技术部', '前端工程师', 'wangxiaolin@company.com', '13900002003', 2002 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2003);
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2004, '徐志远', 'E2004', '技术部', '后端工程师', 'xuzhiyuan@company.com', '13900002004', 2002 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2004);
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2005, '张启明', 'E2005', '技术部', '测试工程师', 'zhangqiming@company.com', '13900002005', 2002 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2005);
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2006, '李文静', 'E2006', '产品部', '产品部经理', 'liwenjing@company.com', '13900002006', 2001 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2006);
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2007, '赵宇轩', 'E2007', '产品部', '产品专员', 'zhaoyuxuan@company.com', '13900002007', 2006 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2007);
+INSERT INTO person (id, name, employee_no, department, position, email, phone, superior_id)
+SELECT 2008, '孙梦琪', 'E2008', '综合部', '人事专员', 'sunmengqi@company.com', '13900002008', 2001 WHERE NOT EXISTS (SELECT 1 FROM person WHERE id = 2008);
+
 -- 全局标签库
 INSERT INTO tag (id, name)
 SELECT 1, '核心成员' WHERE NOT EXISTS (SELECT 1 FROM tag WHERE id = 1);
