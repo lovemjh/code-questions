@@ -3,7 +3,8 @@
 -- IF NOT EXISTS + 每次启动执行，保证可重复初始化
 -- ============================================================
 
--- 人员表（基础信息由外部系统同步，只读；superior_id 为本地可维护的上级关系，NULL 表示顶级节点）
+-- 人员表（基础信息与离职标记由外部系统同步；superior_id 为本地可维护的上级关系，NULL 表示顶级节点；
+-- resigned=TRUE 表示离职，组织架构树不展示）
 CREATE TABLE IF NOT EXISTS person (
     id          BIGINT       NOT NULL,
     name        VARCHAR(50)  NOT NULL,
@@ -13,15 +14,18 @@ CREATE TABLE IF NOT EXISTS person (
     email       VARCHAR(100),
     phone       VARCHAR(30),
     superior_id BIGINT,
+    resigned    BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT pk_person PRIMARY KEY (id)
+    CONSTRAINT pk_person PRIMARY KEY (id),
+    CONSTRAINT uk_person_employee_no UNIQUE (employee_no)
 );
 
--- 全局标签库
+-- 全局标签库（is_system=TRUE 为系统标签，如「离职」，由同步自动维护，接口不可删改）
 CREATE TABLE IF NOT EXISTS tag (
     id         BIGINT      NOT NULL AUTO_INCREMENT,
     name       VARCHAR(50) NOT NULL,
+    is_system  BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_tag PRIMARY KEY (id),
@@ -67,4 +71,17 @@ CREATE TABLE IF NOT EXISTS sys_user_role (
     role_id BIGINT NOT NULL,
     CONSTRAINT pk_sys_user_role PRIMARY KEY (id),
     CONSTRAINT uk_user_role UNIQUE (user_id, role_id)
+);
+
+-- 外部同步审计日志（每次请求一个 batch_no；只记录 id 与结果，不落姓名/手机号等字段值）
+CREATE TABLE IF NOT EXISTS sync_log (
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    batch_no   VARCHAR(40)  NOT NULL,
+    person_id  BIGINT,
+    action     VARCHAR(10),
+    success    BOOLEAN      NOT NULL,
+    error_msg  VARCHAR(500),
+    source_ip  VARCHAR(50),
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_sync_log PRIMARY KEY (id)
 );

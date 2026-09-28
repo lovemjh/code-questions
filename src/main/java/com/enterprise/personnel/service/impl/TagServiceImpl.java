@@ -197,6 +197,12 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
             if (exist == null) {
                 // ID 为空或库中不存在：新增（ID 为空时由雪花算法生成）
                 toInsert.add(rowTag);
+            } else if (Boolean.TRUE.equals(exist.getIsSystem()) && !exist.getName().equals(rowTag.getName())) {
+                if (errors.size() < MAX_REPORTED_ERRORS) {
+                    errors.add(new TagImportResultVO.RowError(rowNo,
+                            "系统标签「" + exist.getName() + "」由系统自动维护，不可修改"));
+                }
+                errorTotal++;
             } else if (exist.getName().equals(rowTag.getName())) {
                 unchanged++;
             } else {
@@ -275,6 +281,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         if (tag == null) {
             throw new BusinessException("标签不存在");
         }
+        if (Boolean.TRUE.equals(tag.getIsSystem())) {
+            throw new BusinessException("系统标签「" + tag.getName() + "」由系统自动维护，不可重命名");
+        }
         checkNameConflict(id, name);
         tag.setName(name);
         // 置空以触发 MetaObjectHandler 的更新时间填充
@@ -286,8 +295,12 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
-        if (getById(id) == null) {
+        Tag tag = getById(id);
+        if (tag == null) {
             throw new BusinessException("标签不存在");
+        }
+        if (Boolean.TRUE.equals(tag.getIsSystem())) {
+            throw new BusinessException("系统标签「" + tag.getName() + "」由系统自动维护，不可删除");
         }
         removeById(id);
         // 级联删除该标签的所有人员绑定关系

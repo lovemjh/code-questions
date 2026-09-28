@@ -10,13 +10,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 人员（基础信息由外部系统同步，只读；仅 superior_id 上级关系本地可维护）
+ * 人员（基础信息与离职标记由外部系统同步写入；仅 superior_id 上级关系本地可维护）
  */
 @Data
 @TableName("person")
 public class Person {
 
-    /** 人员ID（外部系统主键） */
+    /** 人员ID（外部系统主键，唯一匹配键，本地不生成） */
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
@@ -40,6 +40,9 @@ public class Person {
 
     /** 上级人员ID，NULL 表示顶级节点 */
     private Long superiorId;
+
+    /** 离职标记（同步协议字段，事实来源；组织架构树不展示离职人员） */
+    private Boolean resigned;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

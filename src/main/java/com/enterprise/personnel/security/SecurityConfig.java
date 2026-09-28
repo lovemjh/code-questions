@@ -43,6 +43,8 @@ public class SecurityConfig {
             .authorizeRequests()
                 // 登录接口与 H2 控制台无需认证
                 .antMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                // 外部人员同步接口：由 SyncTokenFilter 校验独立业务 Token，不走 JWT
+                .antMatchers("/api/sync/**").permitAll()
                 // 用户管理、角色管理：仅管理员
                 .antMatchers("/api/users/**", "/api/roles/**").hasAuthority("ADMIN")
                 // 人员上级调整：仅管理员

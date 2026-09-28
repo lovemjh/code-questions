@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.enterprise.personnel.common.BusinessException;
+import com.enterprise.personnel.dto.PersonSyncItem;
 import com.enterprise.personnel.entity.Person;
 import com.enterprise.personnel.entity.PersonTag;
 import com.enterprise.personnel.entity.Tag;
@@ -15,6 +16,7 @@ import com.enterprise.personnel.vo.PersonTreeNode;
 import com.enterprise.personnel.vo.PersonVO;
 import com.enterprise.personnel.vo.TagVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -36,6 +38,9 @@ public class PersonServiceImpl extends ServiceImpl<PersonMapper, Person> impleme
 
     /** 上级链回溯的最大深度，超过视为循环引用 */
     private static final int MAX_SUPERIOR_DEPTH = 1000;
+
+    /** 系统标签「离职」：由同步按 resigned 字段自动绑定/解绑 */
+    private static final String RESIGNED_TAG_NAME = "离职";
 
     private final TagMapper tagMapper;
     private final PersonTagMapper personTagMapper;
@@ -64,7 +69,10 @@ public class PersonServiceImpl extends ServiceImpl<PersonMapper, Person> impleme
 
     @Override
     public List<PersonTreeNode> getTree() {
-        List<Person> all = list(new LambdaQueryWrapper<Person>().orderByAsc(Person::getId));
+        // 离职人员不进入组织架构；其下属因"上级不在树内"走下方根节点兜底，自动提升为顶级节点
+        List<Person> all = list(new LambdaQueryWrapper<Person>()
+                .eq(Person::getResigned, false)
+                .orderByAsc(Person::getId));
         Map<Long, PersonTreeNode> nodeById = new LinkedHashMap<>();
         for (Person p : all) {
             PersonTreeNode node = new PersonTreeNode();
@@ -138,14 +146,107 @@ public class PersonServiceImpl extends ServiceImpl<PersonMapper, Person> impleme
                 throw new BusinessException("存在无效的标签ID");
             }
         }
-        // 全量替换：先清空旧绑定，再写入新绑定
-        personTagMapper.delete(new LambdaQueryWrapper<PersonTag>().eq(PersonTag::getPersonId, id));
+        // 「离职」绑定由同步按 resigned 维护，不在手动替换范围，替换时原样保留
+        Long resignedTagId = requireResignedTagId();
+        if (distinctTagIds.contains(resignedTagId)) {
+            throw new BusinessException("「离职」标签由系统自动维护，不能手动绑定");
+        }
+        // 全量替换：先清空旧绑定（排除系统标签），再写入新绑定
+        personTagMapper.delete(new LambdaQueryWrapper<PersonTag>()
+                .eq(PersonTag::getPersonId, id)
+                .ne(PersonTag::getTagId, resignedTagId));
         for (Long tagId : distinctTagIds) {
             PersonTag binding = new PersonTag();
             binding.setPersonId(id);
             binding.setTagId(tagId);
             personTagMapper.insert(binding);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String upsertFromSync(PersonSyncItem item) {
+        String action = getById(item.getId()) == null ? insertFromSync(item) : applySyncUpdate(item);
+        // 「离职」绑定是 resigned 的投影，随本条同步在同一事务内对齐
+        syncResignedTagBinding(item.getId(), Boolean.TRUE.equals(item.getResigned()));
+        return action;
+    }
+
+    /** 新增人员（id 使用外部值）；并发重复推送撞主键时降级为更新（幂等兜底） */
+    private String insertFromSync(PersonSyncItem item) {
+        Person person = new Person();
+        person.setId(item.getId());
+        person.setName(item.getName());
+        person.setEmployeeNo(item.getEmployeeNo());
+        person.setDepartment(item.getDepartment());
+        person.setPosition(item.getPosition());
+        person.setEmail(item.getEmail());
+        person.setPhone(item.getPhone());
+        person.setResigned(Boolean.TRUE.equals(item.getResigned()));
+        try {
+            save(person);
+            return "CREATE";
+        } catch (DuplicateKeyException e) {
+            if (getById(item.getId()) == null) {
+                // 非主键冲突：employee_no 唯一约束冲突
+                throw new BusinessException("工号已被其他人员占用（employeeNo=" + item.getEmployeeNo() + "）");
+            }
+            return applySyncUpdate(item);
+        }
+    }
+
+    /**
+     * 仅更新同步字段；MyBatis-Plus 默认忽略 null 字段，实现协议的"null = 忽略"语义。
+     * 不触碰 superiorId 与业务标签绑定。
+     */
+    private String applySyncUpdate(PersonSyncItem item) {
+        Person patch = new Person();
+        patch.setId(item.getId());
+        patch.setName(item.getName());
+        patch.setEmployeeNo(item.getEmployeeNo());
+        patch.setDepartment(item.getDepartment());
+        patch.setPosition(item.getPosition());
+        patch.setEmail(item.getEmail());
+        patch.setPhone(item.getPhone());
+        if (item.getResigned() != null) {
+            patch.setResigned(item.getResigned());
+        }
+        updateById(patch);
+        return "UPDATE";
+    }
+
+    /** 使「离职」标签绑定与 resigned 状态一致：true 补绑、false 解绑，已一致则不动 */
+    private void syncResignedTagBinding(Long personId, boolean resigned) {
+        Long resignedTagId = requireResignedTagId();
+        LambdaQueryWrapper<PersonTag> bindingQuery = new LambdaQueryWrapper<PersonTag>()
+                .eq(PersonTag::getPersonId, personId)
+                .eq(PersonTag::getTagId, resignedTagId);
+        boolean bound = personTagMapper.selectCount(bindingQuery) > 0;
+        if (resigned && !bound) {
+            PersonTag binding = new PersonTag();
+            binding.setPersonId(personId);
+            binding.setTagId(resignedTagId);
+            personTagMapper.insert(binding);
+        } else if (!resigned && bound) {
+            personTagMapper.delete(bindingQuery);
+        }
+    }
+
+    /** 取「离职」系统标签 id；缺失时补建，历史同名标签补打 is_system 标记 */
+    private Long requireResignedTagId() {
+        Tag tag = tagMapper.selectOne(new LambdaQueryWrapper<Tag>().eq(Tag::getName, RESIGNED_TAG_NAME));
+        if (tag == null) {
+            tag = new Tag();
+            tag.setName(RESIGNED_TAG_NAME);
+            tag.setIsSystem(true);
+            tagMapper.insert(tag);
+        } else if (!Boolean.TRUE.equals(tag.getIsSystem())) {
+            Tag patch = new Tag();
+            patch.setId(tag.getId());
+            patch.setIsSystem(true);
+            tagMapper.updateById(patch);
+        }
+        return tag.getId();
     }
 
     private Person requirePerson(Long id) {

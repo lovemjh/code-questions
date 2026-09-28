@@ -43,3 +43,9 @@ mybatis-plus:
 jwt:
   secret: personnel-management-secret-key-2024
   expiration: 86400000  # 24小时
+
+# 外部人员同步接口业务 Token（请求头 X-Sync-Token；环境变量 SYNC_API_TOKEN 覆盖；
+# 为空时同步接口整体禁用，杜绝"空 Token 匹配空请求头"穿透）
+sync:
+  api:
+    token: ${SYNC_API_TOKEN:}

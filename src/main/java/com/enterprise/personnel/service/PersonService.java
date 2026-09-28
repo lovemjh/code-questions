@@ -2,6 +2,7 @@ package com.enterprise.personnel.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.enterprise.personnel.dto.PersonSyncItem;
 import com.enterprise.personnel.entity.Person;
 import com.enterprise.personnel.vo.PersonTreeNode;
 import com.enterprise.personnel.vo.PersonVO;
@@ -9,7 +10,7 @@ import com.enterprise.personnel.vo.PersonVO;
 import java.util.List;
 
 /**
- * 人员服务：基础信息只读（外部系统同步），仅维护上级关系与标签绑定
+ * 人员服务：基础信息与离职标记由外部系统同步写入，本地仅维护上级关系与业务标签绑定
  */
 public interface PersonService extends IService<Person> {
 
@@ -34,6 +35,14 @@ public interface PersonService extends IService<Person> {
      */
     void updateSuperior(Long id, Long superiorId);
 
-    /** 全量替换人员标签绑定 */
+    /** 全量替换人员标签绑定（「离职」系统标签不可手动绑定，替换时自动保留） */
     void bindTags(Long id, List<Long> tagIds);
+
+    /**
+     * 外部同步 upsert（独立事务）：按外部 id 新增或更新基础字段（null = 忽略），
+     * 不触碰 superiorId，并按 resigned 联动维护「离职」系统标签。
+     *
+     * @return 动作类型：CREATE / UPDATE
+     */
+    String upsertFromSync(PersonSyncItem item);
 }

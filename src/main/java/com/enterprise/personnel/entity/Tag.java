@@ -22,6 +22,9 @@ public class Tag {
     /** 标签名称（全局唯一） */
     private String name;
 
+    /** 系统标签（如「离职」）：由同步按 resigned 自动绑定/解绑，接口不可删改 */
+    private Boolean isSystem;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

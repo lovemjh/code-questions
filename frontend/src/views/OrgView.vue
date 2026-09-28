@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-header">
-        <span>组织架构</span>
+        <span>组织架构 <span class="header-note">不展示离职人员；离职人员的下属将提升为顶级节点</span></span>
         <el-button :loading="loading" @click="load">刷新</el-button>
       </div>
     </template>
@@ -209,6 +209,14 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* 标题后的说明文案：离职人员不参与组织架构展示 */
+.header-note {
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: normal;
+  color: #909399;
 }
 
 .node {

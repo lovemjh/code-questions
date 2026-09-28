@@ -70,6 +70,9 @@ INSERT INTO tag (id, name)
 SELECT 7, '骨干' WHERE NOT EXISTS (SELECT 1 FROM tag WHERE id = 7);
 INSERT INTO tag (id, name)
 SELECT 8, '远程办公' WHERE NOT EXISTS (SELECT 1 FROM tag WHERE id = 8);
+-- 系统标签「离职」（is_system=TRUE）：由外部同步按 resigned 字段自动绑定/解绑，页面与导入不可删改
+INSERT INTO tag (id, name, is_system)
+SELECT 9, '离职', TRUE WHERE NOT EXISTS (SELECT 1 FROM tag WHERE id = 9);
 
 -- 人员-标签 绑定关系
 INSERT INTO person_tag (person_id, tag_id) SELECT 1001, 1 WHERE NOT EXISTS (SELECT 1 FROM person_tag WHERE person_id = 1001 AND tag_id = 1);
