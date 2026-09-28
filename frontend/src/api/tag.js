@@ -19,3 +19,15 @@ export function renameTag(id, name) {
 export function deleteTag(id) {
   return request.delete(`/tags/${id}`)
 }
+
+/** 导出标签 CSV（管理员，返回 Blob 文件流） */
+export function exportTags() {
+  return request.get('/tags/export', { responseType: 'blob' })
+}
+
+/** 导入标签 CSV（管理员）：以 ID 为唯一键，同 ID 更新、异 ID 新增 */
+export function importTags(file) {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post('/tags/import', form)
+}

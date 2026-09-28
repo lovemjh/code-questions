@@ -51,6 +51,8 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.POST, "/api/tags/**").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.PUT, "/api/tags/**").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/api/tags/**").hasAuthority("ADMIN")
+                // 标签导出：仅管理员（导入已由上面的 POST 规则覆盖）
+                .antMatchers(HttpMethod.GET, "/api/tags/export").hasAuthority("ADMIN")
                 // 其余接口：登录即可访问（普通用户可查询）
                 .anyRequest().authenticated()
             .and()

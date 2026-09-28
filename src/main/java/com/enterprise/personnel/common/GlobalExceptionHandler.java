@@ -1,12 +1,14 @@
 package com.enterprise.personnel.common;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * 全局异常处理
@@ -40,6 +42,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public Result<Void> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
         return Result.error(405, "请求方法不支持：" + e.getMessage());
+    }
+
+    /** 上传文件超出大小限制（如标签导入） */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result<Void> handleMaxUploadSize(MaxUploadSizeExceededException e) {
+        log.warn("上传文件超出大小限制: {}", e.getMessage());
+        return Result.error("文件过大，单个文件不能超过 2MB，请精简后重试");
+    }
+
+    /** 数据库唯一约束冲突（并发写入导致的重名等） */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public Result<Void> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        log.warn("数据唯一约束冲突: {}", e.getMessage());
+        return Result.error("数据冲突：标签名称已存在，请刷新后重试");
     }
 
     /** 兜底异常 */

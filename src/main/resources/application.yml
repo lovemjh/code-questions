@@ -5,6 +5,12 @@ spring:
   application:
     name: personnel-management
 
+  # 文件上传限制（标签导入 CSV）
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
+
   # H2 文件数据库（数据持久化到 ./data 目录）
   datasource:
     driver-class-name: org.h2.Driver
