@@ -5,7 +5,9 @@ import com.enterprise.personnel.common.Result;
 import com.enterprise.personnel.dto.TagSaveRequest;
 import com.enterprise.personnel.entity.Tag;
 import com.enterprise.personnel.service.TagService;
+import com.enterprise.personnel.vo.TagBindingCountVO;
 import com.enterprise.personnel.vo.TagImportResultVO;
+import com.enterprise.personnel.vo.TagOverviewVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +44,18 @@ public class TagController {
     @GetMapping
     public Result<List<Tag>> list() {
         return Result.ok(tagService.listAll());
+    }
+
+    /** 人员打标大盘统计（文字汇总 + 饼图）：人员维度，一人仅统计一次 */
+    @GetMapping("/stats/overview")
+    public Result<TagOverviewVO> overview() {
+        return Result.ok(tagService.overview());
+    }
+
+    /** 各标签绑定人次统计（柱状图）：人次维度，同一人员绑定多标签会重复统计 */
+    @GetMapping("/stats/bindings")
+    public Result<List<TagBindingCountVO>> bindingCounts() {
+        return Result.ok(tagService.bindingCounts());
     }
 
     /** 导出标签 CSV（管理员）：UTF-8 带 BOM，Excel / WPS 可直接打开 */

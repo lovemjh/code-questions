@@ -5,6 +5,16 @@ export function listTags() {
   return request.get('/tags')
 }
 
+/** 人员打标大盘统计（文字汇总 + 饼图）：人员维度，每人仅统计一次 */
+export function getTagOverview() {
+  return request.get('/tags/stats/overview')
+}
+
+/** 各标签绑定人次统计（柱状图）：人次维度，同一人员绑定多标签会多次统计 */
+export function getTagBindingCounts() {
+  return request.get('/tags/stats/bindings')
+}
+
 /** 新增标签（自动加入全局标签库） */
 export function createTag(name) {
   return request.post('/tags', { name })

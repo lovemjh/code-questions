@@ -6,10 +6,13 @@ import com.enterprise.personnel.common.BusinessException;
 import com.enterprise.personnel.common.CsvUtils;
 import com.enterprise.personnel.entity.PersonTag;
 import com.enterprise.personnel.entity.Tag;
+import com.enterprise.personnel.mapper.PersonMapper;
 import com.enterprise.personnel.mapper.PersonTagMapper;
 import com.enterprise.personnel.mapper.TagMapper;
 import com.enterprise.personnel.service.TagService;
+import com.enterprise.personnel.vo.TagBindingCountVO;
 import com.enterprise.personnel.vo.TagImportResultVO;
+import com.enterprise.personnel.vo.TagOverviewVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +24,11 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +42,8 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     private static final DateTimeFormatter EXPORT_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final PersonTagMapper personTagMapper;
+
+    private final PersonMapper personMapper;
 
     @Override
     public List<Tag> listAll() {
@@ -295,5 +302,41 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         if (count != null && count > 0) {
             throw new BusinessException("标签名称已存在：" + name);
         }
+    }
+
+    @Override
+    public TagOverviewVO overview() {
+        // 已打标人数按 person_id 去重：一人绑定多个标签仍只算 1 人
+        long hasTag = personTagMapper.selectList(null).stream()
+                .map(PersonTag::getPersonId)
+                .distinct()
+                .count();
+        long total = personMapper.selectCount(null);
+
+        TagOverviewVO vo = new TagOverviewVO();
+        vo.setTotal((int) total);
+        vo.setHasTagCount((int) hasTag);
+        vo.setNoTagCount((int) (total - hasTag));
+        return vo;
+    }
+
+    @Override
+    public List<TagBindingCountVO> bindingCounts() {
+        // 有绑定关系的标签：tagId -> 绑定人次（同一人员绑定多个标签会重复计数）
+        Map<Long, Long> countByTag = personTagMapper.selectList(null).stream()
+                .collect(Collectors.groupingBy(PersonTag::getTagId, Collectors.counting()));
+
+        // 全量标签都保留（无绑定的标签计 0），标签删除后自然不再出现
+        List<Tag> tags = listAll();
+        List<TagBindingCountVO> result = new ArrayList<>(tags.size());
+        for (Tag tag : tags) {
+            TagBindingCountVO vo = new TagBindingCountVO();
+            vo.setTagName(tag.getName());
+            vo.setCount(countByTag.getOrDefault(tag.getId(), 0L).intValue());
+            result.add(vo);
+        }
+        // 按人次降序；次数相同保持标签 ID 升序（稳定排序）
+        result.sort(Comparator.comparingInt(TagBindingCountVO::getCount).reversed());
+        return result;
     }
 }

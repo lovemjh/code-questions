@@ -14,6 +14,7 @@
         <el-menu router :default-active="route.path" class="menu">
           <!-- 功能区：日常业务功能 -->
           <el-menu-item-group title="功能">
+            <el-menu-item index="/person-overview">人员总览</el-menu-item>
             <el-menu-item index="/persons">人员管理</el-menu-item>
             <el-menu-item index="/org">组织架构</el-menu-item>
             <el-menu-item index="/tags">标签管理</el-menu-item>

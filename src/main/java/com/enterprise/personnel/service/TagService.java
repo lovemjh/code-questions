@@ -2,7 +2,9 @@ package com.enterprise.personnel.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.enterprise.personnel.entity.Tag;
+import com.enterprise.personnel.vo.TagBindingCountVO;
 import com.enterprise.personnel.vo.TagImportResultVO;
+import com.enterprise.personnel.vo.TagOverviewVO;
 
 import java.util.List;
 
@@ -31,4 +33,10 @@ public interface TagService extends IService<Tag> {
 
     /** 删除标签，并级联删除人员绑定关系 */
     void delete(Long id);
+
+    /** 人员打标大盘统计：总人数、已打标人数（去重）、未打标人数 */
+    TagOverviewVO overview();
+
+    /** 各标签绑定人次统计：全量标签（含 0 人次），按人次降序 */
+    List<TagBindingCountVO> bindingCounts();
 }

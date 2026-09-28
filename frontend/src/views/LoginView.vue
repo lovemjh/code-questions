@@ -91,7 +91,7 @@ async function handleLogin() {
       roles: res.roles
     }))
     ElMessage.success('登录成功')
-    router.push('/persons')
+    router.push('/person-overview')
   } finally {
     loading.value = false
   }

@@ -9,7 +9,13 @@ const router = createRouter({
       component: () => import('../views/LoginView.vue'),
       meta: { title: '登录', public: true }
     },
-    { path: '/', redirect: '/persons' },
+    { path: '/', redirect: '/person-overview' },
+    {
+      path: '/person-overview',
+      name: 'person-overview',
+      component: () => import('../views/PersonOverviewView.vue'),
+      meta: { title: '人员总览' }
+    },
     {
       path: '/persons',
       name: 'persons',
@@ -43,11 +49,11 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫：未登录跳转登录页，已登录访问登录页回首页，权限不足跳转首页
+// 路由守卫：未登录跳转登录页，已登录访问登录页回人员总览，权限不足跳转人员总览
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
   if (to.meta.public && token) {
-    return '/persons'
+    return '/person-overview'
   }
   if (!to.meta.public && !token) {
     return '/login'
@@ -55,7 +61,7 @@ router.beforeEach((to) => {
   if (to.meta.requireAdmin) {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
     if (!userInfo.roles || !userInfo.roles.includes('ADMIN')) {
-      return '/persons'
+      return '/person-overview'
     }
   }
 })
