@@ -18,10 +18,11 @@ spring:
       enabled: true
       path: /h2-console
 
-  # 启动时执行 schema.sql / data.sql（后续用于建表与内置 mock 演示数据）
+  # 启动时执行 schema.sql / data.sql（建表与内置 mock 演示数据，脚本幂等可重复执行）
   sql:
     init:
       mode: always
+      encoding: utf-8
 
 mybatis-plus:
   configuration:
