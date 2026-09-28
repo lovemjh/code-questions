@@ -1,0 +1,29 @@
+# ---- IDE ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# ---- Java / Maven ----
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# ---- H2 文件数据库 ----
+data/
+*.db
+*.mv.db
+*.trace.db
+
+# ---- Node / 前端 ----
+node_modules/
+dist/
+*.local
+
+# ---- 日志与临时文件 ----
+logs/
+*.log
+*.tmp
+.DS_Store
