@@ -70,3 +70,19 @@ INSERT INTO person_tag (person_id, tag_id) SELECT 1013, 3 WHERE NOT EXISTS (SELE
 INSERT INTO person_tag (person_id, tag_id) SELECT 1014, 5 WHERE NOT EXISTS (SELECT 1 FROM person_tag WHERE person_id = 1014 AND tag_id = 5);
 INSERT INTO person_tag (person_id, tag_id) SELECT 1015, 6 WHERE NOT EXISTS (SELECT 1 FROM person_tag WHERE person_id = 1015 AND tag_id = 6);
 INSERT INTO person_tag (person_id, tag_id) SELECT 1015, 8 WHERE NOT EXISTS (SELECT 1 FROM person_tag WHERE person_id = 1015 AND tag_id = 8);
+
+-- 角色（管理员、普通用户）
+INSERT INTO role (id, name, code) SELECT 1, '管理员', 'ADMIN' WHERE NOT EXISTS (SELECT 1 FROM role WHERE id = 1);
+INSERT INTO role (id, name, code) SELECT 2, '普通用户', 'USER' WHERE NOT EXISTS (SELECT 1 FROM role WHERE id = 2);
+
+-- 用户（密码均为 123456，使用 BCrypt 加密）
+INSERT INTO sys_user (id, username, password_hash, display_name)
+SELECT 1, 'admin', '$2a$10$jPAmlvmBK6sLwjpaCi5Wk.DqISxEMB.UMmLgcSYRza3xc7JXc2qi2', '系统管理员'
+WHERE NOT EXISTS (SELECT 1 FROM sys_user WHERE id = 1);
+INSERT INTO sys_user (id, username, password_hash, display_name)
+SELECT 2, 'user', '$2a$10$jPAmlvmBK6sLwjpaCi5Wk.DqISxEMB.UMmLgcSYRza3xc7JXc2qi2', '普通员工'
+WHERE NOT EXISTS (SELECT 1 FROM sys_user WHERE id = 2);
+
+-- 用户-角色关联
+INSERT INTO sys_user_role (user_id, role_id) SELECT 1, 1 WHERE NOT EXISTS (SELECT 1 FROM sys_user_role WHERE user_id = 1 AND role_id = 1);
+INSERT INTO sys_user_role (user_id, role_id) SELECT 2, 2 WHERE NOT EXISTS (SELECT 1 FROM sys_user_role WHERE user_id = 2 AND role_id = 2);

@@ -37,3 +37,34 @@ CREATE TABLE IF NOT EXISTS person_tag (
     CONSTRAINT pk_person_tag PRIMARY KEY (id),
     CONSTRAINT uk_person_tag UNIQUE (person_id, tag_id)
 );
+
+-- 角色表
+CREATE TABLE IF NOT EXISTS role (
+    id         BIGINT      NOT NULL AUTO_INCREMENT,
+    name       VARCHAR(50) NOT NULL,
+    code       VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_role PRIMARY KEY (id),
+    CONSTRAINT uk_role_code UNIQUE (code)
+);
+
+-- 用户表
+CREATE TABLE IF NOT EXISTS sys_user (
+    id            BIGINT      NOT NULL AUTO_INCREMENT,
+    username      VARCHAR(50) NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    display_name  VARCHAR(50),
+    created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_sys_user PRIMARY KEY (id),
+    CONSTRAINT uk_sys_user_username UNIQUE (username)
+);
+
+-- 用户-角色 关联表（多对多）
+CREATE TABLE IF NOT EXISTS sys_user_role (
+    id      BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    CONSTRAINT pk_sys_user_role PRIMARY KEY (id),
+    CONSTRAINT uk_user_role UNIQUE (user_id, role_id)
+);

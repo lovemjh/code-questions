@@ -39,7 +39,8 @@
             <span v-if="!row.tags || !row.tags.length">—</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="90" fixed="right">
+        <!-- 修改类操作仅管理员可见（与后端 /api/persons PUT 的角色校验一致） -->
+        <el-table-column v-if="canEdit" label="操作" width="90" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
           </template>
@@ -120,6 +121,10 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getPersons, getPersonTree, updateSuperior, bindTags } from '../api/person'
 import { listTags, createTag } from '../api/tag'
+import { isAdmin } from '../utils/auth'
+
+// 是否可修改人员（上级 / 标签）：由角色决定
+const canEdit = isAdmin()
 
 const loading = ref(false)
 const rows = ref([])

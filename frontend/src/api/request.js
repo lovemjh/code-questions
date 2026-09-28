@@ -7,6 +7,15 @@ const request = axios.create({
   timeout: 10000
 })
 
+// 请求拦截器：自动携带 JWT Token
+request.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 request.interceptors.response.use(
   (response) => {
     const result = response.data
@@ -25,6 +34,12 @@ request.interceptors.response.use(
     const result = error.response && error.response.data
     const message = (result && result.message) || error.message || '网络异常，请稍后重试'
     ElMessage.error(message)
+    // 401 未授权，清除登录态并跳转登录页
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('userInfo')
+      window.location.href = '/login'
+    }
     return Promise.reject(error)
   }
 )

@@ -20,7 +20,8 @@
             <b>{{ data.name }}</b>
             <span class="meta">{{ data.department }}<template v-if="data.position"> · {{ data.position }}</template></span>
           </span>
-          <el-button link type="primary" size="small" @click="openAdjust(data)">调整上级</el-button>
+          <!-- 调整上级属于修改操作，仅管理员可见 -->
+          <el-button v-if="canEdit" link type="primary" size="small" @click="openAdjust(data)">调整上级</el-button>
         </div>
       </template>
     </el-tree>
@@ -53,6 +54,10 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getPersonTree, updateSuperior } from '../api/person'
+import { isAdmin } from '../utils/auth'
+
+// 是否可调整上下级关系：由角色决定
+const canEdit = isAdmin()
 
 const loading = ref(false)
 const tree = ref([])

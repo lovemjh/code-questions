@@ -3,7 +3,7 @@
     <template #header>
       <div class="card-header">
         <span>全局标签库</span>
-        <el-button type="primary" @click="openCreate">新增标签</el-button>
+        <el-button v-if="canEdit" type="primary" @click="openCreate">新增标签</el-button>
       </div>
     </template>
 
@@ -13,7 +13,8 @@
       <el-table-column label="创建时间" width="200">
         <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
+      <!-- 修改类操作仅管理员可见（与后端 /api/tags 的角色校验一致） -->
+      <el-table-column v-if="canEdit" label="操作" width="160" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openRename(row)">重命名</el-button>
           <el-button link type="danger" @click="remove(row)">删除</el-button>
@@ -47,6 +48,10 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listTags, createTag, renameTag, deleteTag } from '../api/tag'
+import { isAdmin } from '../utils/auth'
+
+// 是否可维护标签：由角色决定
+const canEdit = isAdmin()
 
 const loading = ref(false)
 const tags = ref([])
