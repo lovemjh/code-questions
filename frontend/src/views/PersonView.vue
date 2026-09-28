@@ -203,6 +203,8 @@ async function onTagsChange(vals) {
     for (let i = 0; i < vals.length; i++) {
       const v = vals[i]
       if (typeof v !== 'string') continue
+      // ID 序列化为字符串后，选中已有标签的值同样是字符串：先按值匹配，避免误当作新名称
+      if (tagOptions.value.some((t) => String(t.id) === v)) continue
       const name = v.trim()
       if (!name) {
         vals.splice(i, 1)
@@ -218,7 +220,7 @@ async function onTagsChange(vals) {
     editForm.tagIds = [...new Set(vals)]
   } catch (e) {
     // 创建失败（如重名冲突）：移除未落库的字符串项，保持选中项合法
-    editForm.tagIds = vals.filter((v) => typeof v !== 'string')
+    editForm.tagIds = vals.filter((v) => tagOptions.value.some((t) => String(t.id) === v))
   } finally {
     tagCreating.value = false
   }
