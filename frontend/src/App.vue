@@ -12,11 +12,18 @@
     <el-container class="body">
       <el-aside width="200px" class="aside">
         <el-menu router :default-active="route.path" class="menu">
-          <el-menu-item index="/persons">人员管理</el-menu-item>
-          <el-menu-item index="/org">组织架构</el-menu-item>
-          <el-menu-item index="/tags">标签管理</el-menu-item>
-          <el-menu-item v-if="isAdmin" index="/users">用户管理</el-menu-item>
-          <el-menu-item v-if="isAdmin" index="/roles">角色管理</el-menu-item>
+          <!-- 功能区：日常业务功能 -->
+          <el-menu-item-group title="功能">
+            <el-menu-item index="/persons">人员管理</el-menu-item>
+            <el-menu-item index="/org">组织架构</el-menu-item>
+            <el-menu-item index="/tags">标签管理</el-menu-item>
+          </el-menu-item-group>
+          <!-- 系统管理区：与功能区分开，仅管理员可见 -->
+          <el-sub-menu v-if="isAdmin" index="/system" class="system-menu">
+            <template #title>系统管理</template>
+            <el-menu-item index="/users">用户管理</el-menu-item>
+            <el-menu-item index="/roles">角色管理</el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </el-aside>
       <el-main class="main">
@@ -101,6 +108,13 @@ async function handleLogout() {
 
 .menu {
   border-right: none;
+}
+
+/* 功能区与系统管理区的分隔 */
+.system-menu {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #ebeef5;
 }
 
 .main {
