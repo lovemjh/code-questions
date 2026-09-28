@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: personnel-management
+
+  # H2 文件数据库（数据持久化到 ./data 目录）
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:file:./data/personnel;MODE=MySQL
+    username: sa
+    password:
+
+  # H2 控制台: http://localhost:8080/h2-console (JDBC URL 同上)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # 启动时执行 schema.sql / data.sql（后续用于建表与内置 mock 演示数据）
+  sql:
+    init:
+      mode: always
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
